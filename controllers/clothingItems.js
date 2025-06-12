@@ -12,7 +12,7 @@ module.exports.createItem = (req, res) => {
 };
 
 module.exports.deleteItem = (req, res) => {
-  ClothingItem.findByIdAndDelete(params.itemId)
+  ClothingItem.findByIdAndDelete(req.params.itemId)
     .then((deletedItem) => {
       if (!deletedItem) {
         return res.status(404).send({ messeage: "Item not found" });

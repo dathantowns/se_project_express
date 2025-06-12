@@ -6,6 +6,12 @@ const { PORT = 3001 } = process.env;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  req.user = {
+    _id: "684a01bc0c1b517bbdc7f0a8",
+  };
+  next();
+});
 
 mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db");
 
@@ -20,6 +26,10 @@ app.get("/", (req, res) => {
     </body>
     </html>`
   );
+});
+
+app.use((req, res) => {
+  res.status(404).json({ message: "Requested resource not found" });
 });
 
 app.listen(PORT, () => {
