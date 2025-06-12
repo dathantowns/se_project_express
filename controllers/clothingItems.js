@@ -12,5 +12,15 @@ module.exports.createItem = (req, res) => {
 };
 
 module.exports.deleteItem = (req, res) => {
-  ClothingItem.findByIdAndDelete(params.itemId);
+  ClothingItem.findByIdAndDelete(params.itemId)
+    .then((deletedItem) => {
+      if (!deletedItem) {
+        return res.status(404).send({ messeage: "Item not found" });
+      } else {
+        res.send({ message: "Item deleted", item: deletedItem });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({ message: "Server Error" });
+    });
 };
