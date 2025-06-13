@@ -1,26 +1,27 @@
+const { NotFoundError, handleError } = require("../utils/errors.js");
 const ClothingItem = require("../models/clothingItems.js");
 
 module.exports.getItems = (req, res) => {
   ClothingItem.find({})
     .then((item) => res.send({ data: item }))
-    .catch(() => res.status(500).send({ message: "Error" }));
+    .catch((err) => handleError(err, res));
 };
 
 module.exports.createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
-  ClothingItem.create({ name, weather, imageUrl, owner: req.user._id });
+  ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
+    .then((item) => res.send({ data: item }))
+    .catch((err) => handleError(err, res));
 };
 
 module.exports.deleteItem = (req, res) => {
   ClothingItem.findByIdAndDelete(req.params.itemId)
-    .then((deletedItem) => {
-      if (!deletedItem) {
-        return res.status(404).send({ messeage: "Item not found" });
-      } else {
-        res.send({ message: "Item deleted", item: deletedItem });
-      }
+    .orFail(() => {
+      const err = new NotFoundError("Item not found");
+      throw err;
     })
-    .catch((err) => {
-      res.status(500).send({ message: "Server Error" });
-    });
+    .then((deletedItem) => {
+      res.send({ message: "Item deleted", item: deletedItem });
+    })
+    .catch((err) => handleError(err, res));
 };
