@@ -5,6 +5,7 @@ const {
 } = require("../utils/errors.js");
 const User = require("../models/users");
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 module.exports.getUsers = (req, res) => {
   User.find({})
@@ -29,7 +30,18 @@ module.exports.getUser = (req, res) => {
 
 module.exports.createUser = (req, res) => {
   const { name, avatar } = req.body;
-  User.create({ name, avatar })
-    .then((user) => res.send({ data: user }))
-    .catch((err) => handleError(err, res));
+  if (!name || !avatar) {
+    const err = new ClientError("Name and Avatar required");
+    return handleError(err, res);
+  } else if (name.length < 2 || name.length > 30) {
+    const err = new ClientError("Name must be 2-30 letters");
+    return handleError(err, res);
+  } else if (!validator.isURL(avatar)) {
+    const err = new ClientError("invalid URL");
+    return handleError(err, res);
+  } else {
+    User.create({ name, avatar })
+      .then((user) => res.send({ data: user }))
+      .catch((err) => handleError(err, res));
+  }
 };

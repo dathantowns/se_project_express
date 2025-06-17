@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db");
 
 app.use("/users", require("./routes/users.js"));
-app.use("/clothingItems", require("./routes/clothingItems.js"));
+app.use("/items", require("./routes/items.js"));
 
 app.get("/", (req, res) => {
   res.send(
