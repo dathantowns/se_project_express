@@ -11,6 +11,6 @@ function handleError(err, res) {
   return res.status(statusCode).send({ message });
 }
 
-const Not_Found = 404;
+const notFound = 404;
 
-module.exports = { handleError, Not_Found };
+module.exports = { handleError, notFound };
