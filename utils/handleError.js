@@ -12,5 +12,6 @@ function handleError(err, res) {
 }
 
 const notFound = 404;
+const conflict = 409;
 
-module.exports = { handleError, notFound };
+module.exports = { handleError, notFound, conflict };

@@ -23,13 +23,22 @@ module.exports.deleteItem = (req, res) => {
     return handleError(err, res);
   }
 
-  return ClothingItem.findByIdAndDelete(req.params.itemId)
+  return ClothingItem.findById(req.params.itemId)
     .orFail(() => {
       const err = new NotFoundError("Item not found");
       throw err;
     })
-    .then((deletedItem) => {
-      res.send({ message: "Item deleted", item: deletedItem });
+    .then((item) => {
+      if (!item.owner.equals(req.user._id)) {
+        return res
+          .status(403)
+          .send({ message: "You do not have permission to delete this item." });
+      }
+      return ClothingItem.findByIdAndDelete(req.params.itemId).then(
+        (deletedItem) => {
+          res.send({ message: "Item deleted", item: deletedItem });
+        }
+      );
     })
     .catch((err) => handleError(err, res));
 };
