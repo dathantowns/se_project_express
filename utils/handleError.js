@@ -1,11 +1,6 @@
 function handleError(err, res) {
-  if (err.name === "ValidationError") {
-    const statusCode = 400;
-    const message = "Invalid request";
-    return res.status(statusCode).send({ message });
-  }
-  const { statusCode } = err;
-  const { message } = err;
+  const { statusCode = 500 } = err;
+  const { message = "Internal server error" } = err;
   console.error(err.message);
 
   return res.status(statusCode).send({ message });
@@ -13,5 +8,15 @@ function handleError(err, res) {
 
 const notFound = 404;
 const conflict = 409;
+const badRequest = 400;
+const unauthorized = 401;
+const serverError = 500;
 
-module.exports = { handleError, notFound, conflict };
+module.exports = {
+  handleError,
+  notFound,
+  conflict,
+  badRequest,
+  unauthorized,
+  serverError,
+};

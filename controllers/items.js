@@ -40,7 +40,12 @@ module.exports.deleteItem = (req, res) => {
         }
       );
     })
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "CastError") {
+        return res.status(400).send({ message: "Invalid item ID" });
+      }
+      return handleError(err, res);
+    });
 };
 
 module.exports.likeItem = (req, res) => {
@@ -64,7 +69,12 @@ module.exports.likeItem = (req, res) => {
       throw err;
     })
     .then((item) => res.send({ data: item }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "CastError") {
+        return res.status(400).send({ message: "Invalid item ID" });
+      }
+      return handleError(err, res);
+    });
 };
 
 module.exports.dislikeItem = (req, res) => {
@@ -88,5 +98,10 @@ module.exports.dislikeItem = (req, res) => {
       throw err;
     })
     .then((item) => res.send({ data: item }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "CastError") {
+        return res.status(400).send({ message: "Invalid item ID" });
+      }
+      return handleError(err, res);
+    });
 };

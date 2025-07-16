@@ -15,9 +15,16 @@ app.use(express.urlencoded({ extended: true }));
 mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db");
 
 app.use("/", require("./routes/index"));
+app.get("/items", require("./routes/items"));
+// Routes that don't require authentication
 
+app.post("/signin", login);
+app.post("/signup", createUser);
+
+// Apply auth middleware to all routes below this point
 app.use(auth);
 
+// Routes that require authentication
 app.use("/items", require("./routes/items"));
 app.use("/users", require("./routes/users"));
 
