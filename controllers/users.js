@@ -16,6 +16,7 @@ const { JWT_SECRET } = require("../utils/config");
 module.exports.getCurrentUser = (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
     const err = new ClientError("Invalid userId");
+    err.statusCode = badRequest;
     return handleError(err, res);
   }
 
@@ -25,7 +26,12 @@ module.exports.getCurrentUser = (req, res) => {
       throw err;
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "CastError") {
+        return res.status(badRequest).send({ message: "Invalid user ID" });
+      }
+      return handleError(err, res);
+    });
 };
 
 module.exports.createUser = (req, res) => {
@@ -45,6 +51,9 @@ module.exports.createUser = (req, res) => {
           res.send({ data: newUser });
         })
         .catch((err) => {
+          if (err.name === "ValidationError") {
+            return res.status(badRequest).send({ message: "Invalid data" });
+          }
           if (err.code === 11000) {
             const message = "User already exists. Please sign in.";
             return res.status(conflict).send({ message });
@@ -81,6 +90,7 @@ module.exports.updateProfile = (req, res) => {
   const { name, avatar } = req.body;
   if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
     const err = new ClientError("Invalid userId");
+    err.statusCode = badRequest;
     return handleError(err, res);
   }
 
@@ -94,5 +104,13 @@ module.exports.updateProfile = (req, res) => {
       throw err;
     })
     .then((user) => res.send({ data: user }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        return res.status(badRequest).send({ message: "Invalid data" });
+      }
+      if (err.name === "CastError") {
+        return res.status(badRequest).send({ message: "Invalid user ID" });
+      }
+      return handleError(err, res);
+    });
 };

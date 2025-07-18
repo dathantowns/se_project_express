@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ClientError = require("../utils/errors/ClientError");
 const NotFoundError = require("../utils/errors/NotFoundError");
-const { handleError } = require("../utils/handleError");
+const { handleError, badRequest, forbidden } = require("../utils/handleError");
 const ClothingItem = require("../models/items");
 
 module.exports.getItems = (req, res) => {
@@ -14,7 +14,12 @@ module.exports.createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => res.send({ data: item }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        return res.status(badRequest).send({ message: "Invalid data" });
+      }
+      return handleError(err, res);
+    });
 };
 
 module.exports.deleteItem = (req, res) => {
@@ -31,7 +36,7 @@ module.exports.deleteItem = (req, res) => {
     .then((item) => {
       if (!item.owner.equals(req.user._id)) {
         return res
-          .status(403)
+          .status(forbidden)
           .send({ message: "You do not have permission to delete this item." });
       }
       return ClothingItem.findByIdAndDelete(req.params.itemId).then(
@@ -42,7 +47,7 @@ module.exports.deleteItem = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid item ID" });
+        return res.status(badRequest).send({ message: "Invalid item ID" });
       }
       return handleError(err, res);
     });
@@ -71,7 +76,7 @@ module.exports.likeItem = (req, res) => {
     .then((item) => res.send({ data: item }))
     .catch((err) => {
       if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid item ID" });
+        return res.status(badRequest).send({ message: "Invalid item ID" });
       }
       return handleError(err, res);
     });
@@ -100,7 +105,7 @@ module.exports.dislikeItem = (req, res) => {
     .then((item) => res.send({ data: item }))
     .catch((err) => {
       if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid item ID" });
+        return res.status(badRequest).send({ message: "Invalid item ID" });
       }
       return handleError(err, res);
     });

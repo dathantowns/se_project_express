@@ -11,6 +11,7 @@ const conflict = 409;
 const badRequest = 400;
 const unauthorized = 401;
 const serverError = 500;
+const forbidden = 403;
 
 module.exports = {
   handleError,
@@ -19,4 +20,5 @@ module.exports = {
   badRequest,
   unauthorized,
   serverError,
+  forbidden,
 };
