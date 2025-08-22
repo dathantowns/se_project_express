@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const { notFound } = require("./utils/handleError");
 const { login, createUser } = require("./controllers/users");
+const { getItems } = require("./controllers/items");
 const auth = require("./middlewares/auth");
 
 const app = express();
@@ -15,8 +16,8 @@ app.use(express.urlencoded({ extended: true }));
 mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db");
 
 app.use("/", require("./routes/index"));
-app.get("/items", require("./routes/items"));
-// Routes that don't require authentication
+// Public route for GET /items
+app.get("/items", getItems);
 
 app.post("/signin", login);
 app.post("/signup", createUser);
@@ -24,7 +25,7 @@ app.post("/signup", createUser);
 // Apply auth middleware to all routes below this point
 app.use(auth);
 
-// Routes that require authentication
+// Protected /items and /users routes
 app.use("/items", require("./routes/items"));
 app.use("/users", require("./routes/users"));
 
