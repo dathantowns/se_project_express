@@ -5,6 +5,10 @@ const { notFound } = require("./utils/handleError");
 const { login, createUser } = require("./controllers/users");
 const { getItems } = require("./controllers/items");
 const auth = require("./middlewares/auth");
+const { errors } = require("celebrate");
+const errorHandler = require("./middlewares/error-handler");
+const { requestLogger, errorLogger } = require("./middlewares/logger");
+require("dotenv").config();
 
 const app = express();
 const { PORT = 3001 } = process.env;
@@ -14,6 +18,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db");
+
+app.use(requestLogger);
 
 app.use("/", require("./routes/index"));
 // Public route for GET /items
@@ -32,6 +38,11 @@ app.use("/users", require("./routes/users"));
 app.use((req, res) => {
   res.status(notFound).json({ message: "Requested resource not found" });
 });
+
+app.use(errorLogger);
+
+app.use(errors()); // celebrate error handler
+app.use(errorHandler); // custom error handler
 
 app.listen(PORT, () => {
   console.log(`Listening at port ${PORT}`);

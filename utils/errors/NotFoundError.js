@@ -1,6 +1,6 @@
-const ClientError = require("./ClientError");
+const BadRequestError = require("./BadRequestError");
 
-class NotFoundError extends ClientError {
+class NotFoundError extends BadRequestError {
   constructor(message) {
     super(message);
     this.name = "NotFoundError";

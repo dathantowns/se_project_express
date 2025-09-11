@@ -1,43 +1,45 @@
 const mongoose = require("mongoose");
-const ClientError = require("../utils/errors/ClientError");
+const BadRequestError = require("../utils/errors/BadRequestError");
 const NotFoundError = require("../utils/errors/NotFoundError");
+UnauthorizedError = require("../utils/errors/UnauthorizedError");
 const { handleError, badRequest, forbidden } = require("../utils/handleError");
 const ClothingItem = require("../models/items");
 
-module.exports.getItems = (req, res) => {
+module.exports.getItems = (req, res, next) => {
   ClothingItem.find({})
-    .then((item) => res.send({ data: item }))
-    .catch((err) => handleError(err, res));
+    .then((items) => res.send({ data: items }))
+    .catch(next);
 };
 
-module.exports.createItem = (req, res) => {
+module.exports.createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
-    .then((item) => res.send({ data: item }))
+    .then((item) => {
+      if (!item) {
+        throw new BadRequestError("Item creation failed");
+      }
+      res.send({ data: item });
+    })
     .catch((err) => {
       if (err.name === "ValidationError") {
-        return res.status(badRequest).send({ message: "Invalid data" });
+        throw new BadRequestError("Invalid data");
       }
-      return handleError(err, res);
-    });
-};
-
-module.exports.deleteItem = (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.itemId)) {
-    const err = new ClientError("Invalid item ID");
-    return handleError(err, res);
-  }
-
-  return ClothingItem.findById(req.params.itemId)
-    .orFail(() => {
-      const err = new NotFoundError("Item not found");
       throw err;
     })
+    .catch(next);
+};
+
+module.exports.deleteItem = (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.itemId)) {
+    throw new BadRequestError("Invalid item ID");
+  }
+  ClothingItem.findById(req.params.itemId)
+    .orFail(() => new NotFoundError("Item not found"))
     .then((item) => {
       if (!item.owner.equals(req.user._id)) {
-        return res
-          .status(forbidden)
-          .send({ message: "You do not have permission to delete this item." });
+        throw new UnauthorizedError(
+          "You do not have permission to delete this item"
+        );
       }
       return ClothingItem.findByIdAndDelete(req.params.itemId).then(
         (deletedItem) => {
@@ -47,66 +49,55 @@ module.exports.deleteItem = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        return res.status(badRequest).send({ message: "Invalid item ID" });
+        throw new BadRequestError("Invalid item ID");
       }
-      return handleError(err, res);
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
-module.exports.likeItem = (req, res) => {
+module.exports.likeItem = (req, res, next) => {
   if (!req.params.itemId) {
-    const err = new NotFoundError("Item not found");
-    return handleError(err, res);
+    throw new NotFoundError("Item not found");
   }
-
   if (!mongoose.Types.ObjectId.isValid(req.params.itemId)) {
-    const err = new ClientError("Invalid item ID");
-    return handleError(err, res);
+    throw new BadRequestError("Invalid item ID");
   }
-
-  return ClothingItem.findByIdAndUpdate(
+  ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $addToSet: { likes: req.user._id } },
     { new: true }
   )
-    .orFail(() => {
-      const err = new NotFoundError("Item not found");
-      throw err;
-    })
+    .orFail(() => new NotFoundError("Item not found"))
     .then((item) => res.send({ data: item }))
     .catch((err) => {
       if (err.name === "CastError") {
-        return res.status(badRequest).send({ message: "Invalid item ID" });
+        throw new BadRequestError("Invalid item ID");
       }
-      return handleError(err, res);
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
-module.exports.dislikeItem = (req, res) => {
+module.exports.dislikeItem = (req, res, next) => {
   if (!req.params.itemId) {
-    const err = new NotFoundError("Item not found");
-    return handleError(err, res);
+    throw new NotFoundError("Item not found");
   }
-
   if (!mongoose.Types.ObjectId.isValid(req.params.itemId)) {
-    const err = new ClientError("Invalid item ID");
-    return handleError(err, res);
+    throw new BadRequestError("Invalid item ID");
   }
-
-  return ClothingItem.findByIdAndUpdate(
+  ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $pull: { likes: req.user._id } },
     { new: true }
   )
-    .orFail(() => {
-      const err = new NotFoundError("Item not found");
-      throw err;
-    })
+    .orFail(() => new NotFoundError("Item not found"))
     .then((item) => res.send({ data: item }))
     .catch((err) => {
       if (err.name === "CastError") {
-        return res.status(badRequest).send({ message: "Invalid item ID" });
+        throw new BadRequestError("Invalid item ID");
       }
-      return handleError(err, res);
-    });
+      throw err;
+    })
+    .catch(next);
 };

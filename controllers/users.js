@@ -9,108 +9,83 @@ const {
   unauthorized,
   serverError,
 } = require("../utils/handleError");
-const ClientError = require("../utils/errors/ClientError");
+const BadRequestError = require("../utils/errors/BadRequestError");
 const NotFoundError = require("../utils/errors/NotFoundError");
+const UnauthorizedError = require("../utils/errors/UnauthorizedError");
 const { JWT_SECRET } = require("../utils/config");
 
-module.exports.getCurrentUser = (req, res) => {
+module.exports.getCurrentUser = (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-    const err = new ClientError("Invalid userId");
-    err.statusCode = badRequest;
-    return handleError(err, res);
+    throw new BadRequestError("Invalid userId");
   }
-
-  return User.findById(req.user._id)
-    .orFail(() => {
-      const err = new NotFoundError("User not found");
-      throw err;
-    })
+  User.findById(req.user._id)
+    .orFail(() => new NotFoundError("User not found"))
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(badRequest).send({ message: "Invalid user ID" });
-      }
-      return handleError(err, res);
-    });
+    .catch(next);
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
   bcrypt
     .hash(password, 10)
     .then((hash) => {
-      User.create({ name, avatar, email, password: hash })
-        .then((user) => {
-          const newUser = user.toObject({
-            transform(doc, ret) {
-              const transformedRet = { ...ret };
-              delete transformedRet.password;
-              return transformedRet;
-            },
-          });
-          res.send({ data: newUser });
-        })
-        .catch((err) => {
-          if (err.name === "ValidationError") {
-            return res.status(badRequest).send({ message: "Invalid data" });
-          }
-          if (err.code === 11000) {
-            const message = "User already exists. Please sign in.";
-            return res.status(conflict).send({ message });
-          }
-          return handleError(err, res);
-        });
+      return User.create({ name, avatar, email, password: hash });
     })
-    .catch((err) => handleError(err, res));
+    .then((user) => {
+      const newUser = user.toObject();
+      delete newUser.password;
+      res.send({ data: newUser });
+    })
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        throw new BadRequestError("Invalid data");
+      }
+      if (err.code === 11000) {
+        throw new BadRequestError("User already exists. Please sign in.");
+      }
+      throw err;
+    })
+    .catch(next);
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res
-      .status(badRequest)
-      .send({ message: "Email and password are required." });
+    throw new BadRequestError("Email and password are required.");
   }
-  return User.findUserByCredentials(email, password)
+  User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
         expiresIn: "7d",
       });
-      res.send({ token: token });
+      res.send({ token });
     })
     .catch((err) => {
       if (err.message === "Incorrect email or password") {
-        return res.status(unauthorized).send({ message: err.message });
+        throw new UnauthorizedError(err.message);
       }
-      return res.status(serverError).send({ message: "Internal server error" });
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
-module.exports.updateProfile = (req, res) => {
+module.exports.updateProfile = (req, res, next) => {
   const { name, avatar } = req.body;
   if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-    const err = new ClientError("Invalid userId");
-    err.statusCode = badRequest;
-    return handleError(err, res);
+    throw new BadRequestError("Invalid userId");
   }
-
-  return User.findByIdAndUpdate(
+  User.findByIdAndUpdate(
     req.user._id,
     { name, avatar },
     { new: true, runValidators: true }
   )
-    .orFail(() => {
-      const err = new NotFoundError("User not found");
-      throw err;
-    })
+    .orFail(() => new NotFoundError("User not found"))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(badRequest).send({ message: "Invalid data" });
+      if (err.name === "ValidationError" || err.name === "CastError") {
+        throw new BadRequestError("Invalid data");
       }
-      if (err.name === "CastError") {
-        return res.status(badRequest).send({ message: "Invalid user ID" });
-      }
-      return handleError(err, res);
-    });
+      throw err;
+    })
+    .catch(next);
 };
