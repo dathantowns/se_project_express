@@ -1,14 +1,14 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const { errors } = require("celebrate");
 const { notFound } = require("./utils/handleError");
 const { login, createUser } = require("./controllers/users");
 const { getItems } = require("./controllers/items");
 const auth = require("./middlewares/auth");
-const { errors } = require("celebrate");
 const errorHandler = require("./middlewares/error-handler");
 const { requestLogger, errorLogger } = require("./middlewares/logger");
-require("dotenv").config();
 
 const app = express();
 const { PORT = 3001 } = process.env;
@@ -49,6 +49,4 @@ app.use(errorLogger);
 app.use(errors()); // celebrate error handler
 app.use(errorHandler); // custom error handler
 
-app.listen(PORT, () => {
-  console.log(`Listening at port ${PORT}`);
-});
+app.listen(PORT);

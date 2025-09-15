@@ -1,6 +1,13 @@
 const { celebrate, Joi } = require("celebrate");
 const validator = require("validator");
 
+const validateURL = (value, helpers) => {
+  if (validator.isURL(value)) {
+    return value;
+  }
+  return helpers.error("string.uri");
+};
+
 const itemValidator = celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30).required().messages({
@@ -63,13 +70,6 @@ const idParamValidator = (paramName) =>
         }),
     }),
   });
-
-const validateURL = (value, helpers) => {
-  if (validator.isURL(value)) {
-    return value;
-  }
-  return helpers.error("string.uri");
-};
 
 module.exports = {
   itemValidator,

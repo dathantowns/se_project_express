@@ -1,7 +1,6 @@
 function handleError(err, res) {
   const { statusCode = 500 } = err;
   const { message = "Internal server error" } = err;
-  console.error(err.message);
 
   return res.status(statusCode).send({ message });
 }

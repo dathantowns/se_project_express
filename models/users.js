@@ -6,18 +6,18 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: false,
-    // minlength: 2,
-    // maxlength: 30,
+    minlength: 2,
+    maxlength: 30,
   },
   avatar: {
     type: String,
     required: false,
-    // validate: {
-    //   validator(value) {
-    //     return validator.isURL(value);
-    //   },
-    //   message: "You must enter a valid URL",
-    // },
+    validate: {
+      validator(value) {
+        return validator.isURL(value);
+      },
+      message: "You must enter a valid URL",
+    },
   },
   email: {
     type: String,
@@ -32,7 +32,6 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: 8,
     select: false,
   },
 });
