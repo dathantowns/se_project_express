@@ -3,12 +3,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const { errors } = require("celebrate");
-const { notFound } = require("./utils/handleError");
-const { login, createUser } = require("./controllers/users");
 const { getItems } = require("./controllers/items");
 const auth = require("./middlewares/auth");
 const errorHandler = require("./middlewares/error-handler");
 const { requestLogger, errorLogger } = require("./middlewares/logger");
+const NotFoundError = require("./utils/errors/NotFoundError");
 
 const app = express();
 const { PORT = 3001 } = process.env;
@@ -30,9 +29,6 @@ app.get("/crash-test", () => {
   }, 0);
 });
 
-app.post("/signin", login);
-app.post("/signup", createUser);
-
 // Apply auth middleware to all routes below this point
 app.use(auth);
 
@@ -40,8 +36,8 @@ app.use(auth);
 app.use("/items", require("./routes/items"));
 app.use("/users", require("./routes/users"));
 
-app.use((req, res) => {
-  res.status(notFound).json({ message: "Requested resource not found" });
+app.use((req, res, next) => {
+  next(new NotFoundError("Requested resource not found"));
 });
 
 app.use(errorLogger);
