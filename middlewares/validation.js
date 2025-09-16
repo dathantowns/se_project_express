@@ -1,14 +1,3 @@
-const updateProfileValidator = celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).messages({
-      "string.min": 'The "name" field must be at least 2 characters',
-      "string.max": 'The "name" field must be at most 30 characters',
-    }),
-    avatar: Joi.string().custom(validateURL, "custom URL validation").messages({
-      "string.uri": 'The "avatar" field must be a valid url',
-    }),
-  }),
-});
 const { celebrate, Joi } = require("celebrate");
 const validator = require("validator");
 
@@ -81,6 +70,18 @@ const idParamValidator = (paramName) =>
         }),
     }),
   });
+
+const updateProfileValidator = celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30).messages({
+      "string.min": 'The "name" field must be at least 2 characters',
+      "string.max": 'The "name" field must be at most 30 characters',
+    }),
+    avatar: Joi.string().custom(validateURL, "custom URL validation").messages({
+      "string.uri": 'The "avatar" field must be a valid url',
+    }),
+  }),
+});
 
 module.exports = {
   itemValidator,
